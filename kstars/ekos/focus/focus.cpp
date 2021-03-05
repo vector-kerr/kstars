@@ -1277,8 +1277,18 @@ void Focus::calculateHFR()
     {
         if (Options::focusUseFullField())
         {
-            focusView->setStarFilterRange(static_cast <float> (fullFieldInnerRing->value() / 100.0),
-                                          static_cast <float> (fullFieldOuterRing->value() / 100.0));
+            // If subframing is enabled and in use, then the image is cropped to the
+            // outer ring, so display the star filter range now needs to be adjusted
+            // to match the cropped image
+            if(useSubFrame->isEnabled() && useSubFrame->isChecked())
+                focusView->setStarFilterRange(fullFieldInnerRing->value() / fullFieldOuterRing->value(), 1.0);
+            
+            // Otherwise, use the filter range as supplied
+            } else {
+                focusView->setStarFilterRange(static_cast <float> (fullFieldInnerRing->value() / 100.0),
+                                            static_cast <float> (fullFieldOuterRing->value() / 100.0));
+            }
+
             focusView->filterStars();
 
             // Get the average HFR of the whole frame
@@ -1876,9 +1886,10 @@ void Focus::setHFRComplete()
         int minX, maxX, minY, maxY, minW, maxW, minH, maxH;
         targetChip->getFrameMinMax(&minX, &maxX, &minY, &maxY, &minW, &maxW, &minH, &maxH);
         
+        int maxDimension = std::max(maxW, maxH);
 
-        int subX  = (maxW / 2) * subBinX;
-        int subY   = (maxY / 2) * subBinY;
+        int subX  = (maxDimension / 2) * subBinX;
+        int subY   = (maxDimension / 2) * subBinY;
         int subW   = 2 * fullFieldOuterRing->value() * subBinX;
         int subH   = 2 * fullFieldOuterRing->value() * subBinY;
 
