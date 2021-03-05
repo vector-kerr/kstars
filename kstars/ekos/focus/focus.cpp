@@ -1859,6 +1859,67 @@ void Focus::setHFRComplete()
         }
     }
 
+
+
+    // If star is NOT yet selected in a non-full-frame situation
+    // then let's now try to find the star. This step is skipped for full frames
+    // since there isn't a single star to select as we are only interested in the overall average HFR.
+    // We need to check if we can find the star right away, or if we need to _subframe_ around the
+    // selected star.
+
+    // If we are performing a full-field capture, and sub-frame is enabled, then
+    // set the "star center" to the center of the image, and set the subframe to
+    // match the radius of the capture area. Badda bing, badda boom, quicker
+    // full field focusing. :D
+    if (Options::focusUseFullField() == true && useSubFrame->isEnabled() && useSubFrame->isChecked() && subFramed == false)
+    {
+        int minX, maxX, minY, maxY, minW, maxW, minH, maxH;
+        targetChip->getFrameMinMax(&minX, &maxX, &minY, &maxY, &minW, &maxW, &minH, &maxH);
+        
+
+        int subX  = (maxW / 2) * subBinX;
+        int subY   = (maxY / 2) * subBinY;
+        int subW   = 2 * fullFieldOuterRing->value() * subBinX;
+        int subH   = 2 * fullFieldOuterRing->value() * subBinY;
+
+        // Try to limit the subframed selection
+        if (subX < minX)
+            subX = minX;
+        if (subY < minY)
+            subY = minY;
+        if ((subW + subX) > maxW)
+            subW = maxW - subX;
+        if ((subH + subY) > maxH)
+            subH = maxH - subY;
+
+        // Build the new settings for the chip
+        QVariantMap settings = frameSettings[targetChip];
+        settings["x"]        = subX;
+        settings["y"]        = subY;
+        settings["w"]        = subW;
+        settings["h"]        = subH;
+        settings["binx"]     = subBinX;
+        settings["biny"]     = subBinY;
+    
+        // Log the subframe parameters
+        qCDebug(KSTARS_EKOS_FOCUS) << "Frame is subframed. X:" << subX << "Y:" << subY << "W:" << subW << "H:" << subH << "binX:" <<
+                                    subBinX << "binY:" << subBinY;
+
+        starsHFR.clear();
+
+        // Update the target chip's settings
+        frameSettings[targetChip] = settings;
+
+        subFramed = true;
+
+        focusView->setFirstLoad(true);
+
+        // Now let's capture again for the actual requested subframed image.
+        capture();
+        return;
+    }
+
+
     // Check if the focus module is requested to verify if the minimum HFR value is met.
     if (minimumRequiredHFR >= 0)
     {
@@ -4126,9 +4187,11 @@ void Focus::initConnections()
     {
         fullFieldInnerRing->setEnabled(toggled);
         fullFieldOuterRing->setEnabled(toggled);
+
+        focusBoxSize->setEnabled(!toggled);
+
         if (toggled)
         {
-            useSubFrame->setChecked(false);
             useAutoStar->setChecked(false);
         }
         else
