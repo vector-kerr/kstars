@@ -1888,10 +1888,10 @@ void Focus::setHFRComplete()
         
         int maxDimension = std::max(maxW, maxH);
 
-        int subX  = (maxDimension / 2) * subBinX;
-        int subY   = (maxDimension / 2) * subBinY;
-        int subW   = 2 * fullFieldOuterRing->value() * subBinX;
-        int subH   = 2 * fullFieldOuterRing->value() * subBinY;
+        int subX  = (maxW / 2) * subBinX;
+        int subY   = (maxH / 2) * subBinY;
+        int subW   = 2 * maxDimension * subBinX;
+        int subH   = 2 * maxDimension * subBinY;
 
         // Try to limit the subframed selection
         if (subX < minX)
