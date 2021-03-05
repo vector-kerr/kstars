@@ -1280,11 +1280,7 @@ void Focus::calculateHFR()
             // If subframing is enabled and in use, then the image is cropped to the
             // outer ring, so display the star filter range now needs to be adjusted
             // to match the cropped image
-<<<<<<< HEAD
-            if(useSubFrame->isEnabled() && useSubFrame->isChecked()) {
-=======
-            if(useSubFrame->isEnabled() && useSubFrame->isChecked())
->>>>>>> 11ffc898d432123c5ed3ab4d5bff2aacf37e269e
+            if(Options::focusSubFrame()) {
                 focusView->setStarFilterRange(fullFieldInnerRing->value() / fullFieldOuterRing->value(), 1.0);
             
             // Otherwise, use the filter range as supplied
